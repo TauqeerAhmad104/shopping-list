@@ -30,7 +30,9 @@ pipeline {
         stage('Build') {
             steps {
                 container('docker') {
-                    sh 'docker build -t my-image .'
+                    sh '''#!/bin/bash
+                    docker build -t my-image .
+                    '''
                 }
             }
         }
@@ -38,7 +40,9 @@ pipeline {
             steps {
                 container('docker') {
                     withDockerRegistry([ credentialsId: 'docker-hub-credentials', url: '' ]) {
-                        sh 'docker push my-image:latest'
+                        sh '''#!/bin/bash
+                        docker push my-image:latest
+                        '''
                     }
                 }
             }
