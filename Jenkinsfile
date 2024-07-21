@@ -7,18 +7,21 @@ pipeline {
             kind: Pod
             spec:
               containers:
-                - name: docker
-                  image: docker:19.03.12
+                - name: jnlp
+                  image: jenkins/inbound-agent:latest
+                  workingDir: /home/jenkins/agent
                   command:
                   - cat
                   tty: true
-                  volumeMounts:
-                    - name: docker-sock
-                      mountPath: /var/run/docker.sock
-              volumes:
-                - name: docker-sock
-                  hostPath:
-                    path: /var/run/docker.sock
+                - name: docker
+                  image: docker:19.03.12-dind
+                  workingDir: /home/jenkins/agent
+                  command:
+                  - dockerd-entrypoint.sh
+                  tty: true
+                  env:
+                    - name: DOCKER_TLS_CERTDIR
+                      value: ""
             """
         }
     }
@@ -32,8 +35,10 @@ pipeline {
         }
         stage('Push') {
             steps {
-                withDockerRegistry([ credentialsId: 'docker-hub-credentials', url: '' ]) {
-                    sh 'docker push my-image:latest'
+                container('docker') {
+                    withDockerRegistry([ credentialsId: 'docker-hub-credentials', url: '' ]) {
+                        sh 'docker push my-image:latest'
+                    }
                 }
             }
         }
